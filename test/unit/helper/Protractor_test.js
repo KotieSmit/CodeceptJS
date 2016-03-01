@@ -317,10 +317,23 @@ describe('Protractor', function() {
       return expect(val).to.equal('ssh');      
     });
     
-    it.only('should grab attribute from element', function*() {
+    it('should grab attribute from element', function*() {
       yield I.amOnPage('/#/info');
       let val = yield I.grabAttribute('a.btn', 'ng-href');
       return expect(val).to.equal('#/');            
     });
   });  
+  
+  describe('page title : #seeTitle, #dontSeeTitle, #grabTitle', () => {
+    it('should check page title', function*() {
+      yield I.amOnPage('/');
+      return I.seeInTitle('Event App');
+    });
+    
+    it.only('should grab page title', function*() {
+      yield I.amOnPage('/');      
+      expect(I.grabTitle()).to.eventually.equal('Event App');
+    });
+    
+  });
 });
