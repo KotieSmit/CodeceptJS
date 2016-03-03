@@ -1,8 +1,8 @@
 'use strict';
 
 let Protractor = require('../../../lib/helper/Protractor');
-// let site_url = 'http://davertmik.github.io/angular-demo-app';
-let site_url = 'http://127.0.0.1:5000';
+let site_url = 'http://davertmik.github.io/angular-demo-app';
+// let site_url = 'http://127.0.0.1:5000';
 let assert = require('assert');
 let I, browser;
 let path = require('path');
@@ -13,6 +13,9 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 let AssertionFailedError = require('../../../lib/assert/error');
+let formContents = require('../../../lib/utils').test.submittedData(path.join(__dirname, '../../data/app/db'));
+let fileExists = require('../../../lib/utils').fileExists;
+
 require('co-mocha')(require('mocha'));
 
 function assertFormContains(key, value) {
@@ -203,7 +206,7 @@ describe('Protractor', function() {
       return assertFormContains('name', 'Jon Doe');      
     });
     
-    it.only('should fill textarea by label', function*() {
+    it('should fill textarea by label', function*() {
       yield I.amOnPage('/');
       yield I.fillField('Description', 'Just the best event');
       yield I.click('Submit');
@@ -266,7 +269,7 @@ describe('Protractor', function() {
       return I.seeInField('code', '');      
     });
     
-    it('should throw error if field is not empty', function*() {
+    it.only('should throw error if field is not empty', function*() {
       yield I.amOnPage('/#/options');
       return I.seeInField('#ssh', 'something')
         .then(expectError)
@@ -330,10 +333,110 @@ describe('Protractor', function() {
       return I.seeInTitle('Event App');
     });
     
-    it.only('should grab page title', function*() {
+    it('should grab page title', function*() {
       yield I.amOnPage('/');      
       expect(I.grabTitle()).to.eventually.equal('Event App');
+    });    
+  });
+  
+  describe('#attachFile', () => {
+    it('should upload file located by CSS', function*() {
+      I.amOutsideAngularApp(); // switch off angular mode
+      yield I.amOnPage('http://localhost:8000/form/file');
+      yield I.attachFile('#avatar', 'app/avatar.jpg');
+      yield I.click('Submit');
+      return formContents()['files'].should.have.key('avatar');      
     });
     
+    it('should upload file located by label', function*() {
+      I.amOutsideAngularApp(); // switch off angular mode
+      yield I.amOnPage('http://localhost:8000/form/file');
+      yield I.attachFile('Avatar', 'app/avatar.jpg');
+      yield I.click('Submit');
+      return formContents()['files'].should.have.key('avatar');      
+    });
+  });
+  
+  describe('#saveScreenshot', () => {
+    beforeEach(() => {
+      global.output_dir = path.join(global.codecept_dir, 'output');
+    });
+
+    it('should create a screenshot file in output dir', function*() {
+      yield I.amOnPage('/');
+      yield I.saveScreenshot('protractor_user.png');
+      assert.ok(fileExists(path.join(output_dir, 'protractor_user.png')), null, 'file does not exists');
+    });
+
+    it('should create a screenshot file in output dir', function*() {
+      let test = { name: 'protractor should do smth' };
+      yield I.amOnPage('/')
+      yield I._failed(test);
+      assert.ok(fileExists(path.join(output_dir, 'protractor_should_do_smth.failed.png')), null, 'file does not exists');
+    });
+  });
+  
+  describe('cookies : #setCookie, #clearCookies, #seeCookie', () => {
+    it('should do all cookie stuff', function*() {
+      yield I.amOnPage('/')
+      yield I.setCookie({name: 'auth', value: '123456'});
+      yield I.seeCookie('auth');
+      yield I.dontSeeCookie('auuth');
+      yield I.grabCookie('auth').then((cookie) => assert.equal(cookie.value, '123456'));
+      yield I.clearCookie('auth');
+      yield I.dontSeeCookie('auth');
+    });
+  });  
+  
+  describe('#seeInSource', () => {
+    it('should check for text to be in HTML source', function*() {
+      yield I.amOnPage('/')
+      yield I.seeInSource('<meta charset="utf-8"');
+      return I.dontSeeInSource('<article');
+    });
+  });  
+  
+  describe('window size : #resizeWindow', () => {
+    it('should change the active window size', function*() {
+      yield I.amOnPage('/')
+      yield I.resizeWindow(640, 480);
+      let size = yield I.browser.manage().window().getSize();
+      assert.equal(size.width, 640);
+      assert.equal(size.height, 480);
+    });
+  });  
+  
+  describe('#waitForText', () => {
+    beforeEach(() => {
+      return I.amOnPage('/#/info');   
+    });
+    
+    it('should wait for text', function*() {
+      yield I.dontSee('Boom!');
+      yield I.waitForText('Boom!', 2);
+      return I.see('Boom!');
+    });
+
+    it('should wait for text in context', function*() {
+      yield I.dontSee('Boom!');
+      yield I.waitForText('Boom!', 2, '#hello');
+      return I.see('Boom!');
+    });
+
+    it('should return error if not present', function*() {
+      return I.waitForText('Nothing here', 0, '#hello')
+        .then(expectError)
+        .thenCatch((e) => {
+          e.message.should.include('Wait timed out');
+        });
+    });
+
+    it('should return error if waiting is too small', function*() {
+      return I.waitForText('Boom!', 0.5)
+        .then(expectError)
+        .thenCatch((e) => {
+          e.message.should.include('Wait timed out');
+        });
+    });
   });
 });
