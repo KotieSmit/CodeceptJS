@@ -269,7 +269,7 @@ describe('Protractor', function() {
       return I.seeInField('code', '');      
     });
     
-    it.only('should throw error if field is not empty', function*() {
+    it('should throw error if field is not empty', function*() {
       yield I.amOnPage('/#/options');
       return I.seeInField('#ssh', 'something')
         .then(expectError)
