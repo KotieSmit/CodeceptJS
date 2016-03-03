@@ -1,3 +1,19 @@
+## 0.2.8
+
+* [WebDriverIO] added `seeNumberOfElements` by @fabioel
+
+## 0.2.7
+
+* process ends with exit code 1 on error or failure #49
+* fixed registereing global Helper #57
+* fixed handling error in within block #50
+
+## 0.2.6
+
+* Fixed `done() was called multiple times`
+* [WebDriverIO] added `waitToHide` method by @fabioel
+* Added global `Helper` (alias `codecept_helper)`, object use for writing custom Helpers. Generator updated. Changes to #48 
+
 ## 0.2.5
 
 * Fixed issues with using yield inside a test #45 #47 #43
