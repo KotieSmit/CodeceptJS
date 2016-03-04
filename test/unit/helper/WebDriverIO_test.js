@@ -10,7 +10,7 @@ let fs = require('fs');
 let fileExists = require('../../../lib/utils').fileExists;
 let AssertionFailedError = require('../../../lib/assert/error');
 let formContents = require('../../../lib/utils').test.submittedData(path.join(__dirname, '../../data/app/db'));
-let expectErrors = require('../../../lib/utils').test.expectErrors;
+let expectError = require('../../../lib/utils').test.expectError;
 
 
 describe('WebDriverIO', function () {

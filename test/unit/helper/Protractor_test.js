@@ -15,6 +15,7 @@ var expect = chai.expect;
 let AssertionFailedError = require('../../../lib/assert/error');
 let formContents = require('../../../lib/utils').test.submittedData(path.join(__dirname, '../../data/app/db'));
 let fileExists = require('../../../lib/utils').fileExists;
+let expectError = require('../../../lib/utils').test.expectErrors;
 
 require('co-mocha')(require('mocha'));
 
@@ -24,9 +25,6 @@ function assertFormContains(key, value) {
   });
 }
 
-function expectError() {
-  throw new Error('should not be thrown');
-}
 
 describe('Protractor', function() {
   this.timeout(20000);
@@ -62,7 +60,7 @@ describe('Protractor', function() {
       yield I.seeInCurrentUrl('/info');
       return I.dontSeeInCurrentUrl('/result');
     });
-    
+  
     it('should check for equality', function*() {
       yield I.amOnPage('/#/info');
       yield I.seeCurrentUrlEquals('/#/info');
@@ -87,10 +85,10 @@ describe('Protractor', function() {
   
   describe('see element : #seeElement, #dontSeeElement', () => {    
     it('should check visible elements on page', function*() {
-      yield I.amOnPage('/#/info');
+      yield I.amOnPage('/');
       yield I.seeElement('.btn.btn-primary');
       yield I.seeElement({css: '.btn.btn-primary'});
-      return I.dontSee({css: 'head'});
+      return I.dontSeeElement({css: '.btn.btn-secondary'});
     });
   });
   
@@ -335,22 +333,23 @@ describe('Protractor', function() {
     
     it('should grab page title', function*() {
       yield I.amOnPage('/');      
-      expect(I.grabTitle()).to.eventually.equal('Event App');
+      return expect(I.grabTitle()).to.eventually.equal('Event App');
     });    
   });
   
   describe('#attachFile', () => {
-    it('should upload file located by CSS', function*() {
+    beforeEach(() => {
       I.amOutsideAngularApp(); // switch off angular mode
-      yield I.amOnPage('http://localhost:8000/form/file');
+      return I.amOnPage('http://localhost:8000/form/file');      
+    });
+    
+    it('should upload file located by CSS', function*() {
       yield I.attachFile('#avatar', 'app/avatar.jpg');
       yield I.click('Submit');
       return formContents()['files'].should.have.key('avatar');      
     });
     
     it('should upload file located by label', function*() {
-      I.amOutsideAngularApp(); // switch off angular mode
-      yield I.amOnPage('http://localhost:8000/form/file');
       yield I.attachFile('Avatar', 'app/avatar.jpg');
       yield I.click('Submit');
       return formContents()['files'].should.have.key('avatar');      
@@ -365,14 +364,14 @@ describe('Protractor', function() {
     it('should create a screenshot file in output dir', function*() {
       yield I.amOnPage('/');
       yield I.saveScreenshot('protractor_user.png');
-      assert.ok(fileExists(path.join(output_dir, 'protractor_user.png')), null, 'file does not exists');
+      return assert.ok(fileExists(path.join(output_dir, 'protractor_user.png')), null, 'file does not exists');
     });
 
     it('should create a screenshot file in output dir', function*() {
       let test = { name: 'protractor should do smth' };
       yield I.amOnPage('/')
       yield I._failed(test);
-      assert.ok(fileExists(path.join(output_dir, 'protractor_should_do_smth.failed.png')), null, 'file does not exists');
+      return assert.ok(fileExists(path.join(output_dir, 'protractor_should_do_smth.failed.png')), null, 'file does not exists');
     });
   });
   
